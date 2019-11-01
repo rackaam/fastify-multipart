@@ -6,9 +6,9 @@ import fastify = require("fastify");
 import { Server, IncomingMessage, ServerResponse } from 'http';
 import { Readable } from 'stream';
 
-type MultipartHandler = (
+export type MultipartHandler = (
     field: string,
-    file: any,
+    file: Readable,
     filename: string,
     encoding: string,
     mimetype: string,
@@ -21,15 +21,8 @@ interface BodyEntry {
     mimetype: string,
     limit: false
 }
-    
-declare module "fastify" {
-    interface FastifyRequest<HttpRequest> {
-        isMultipart: () => boolean;
-        multipart: (handler: MultipartHandler, next: (err: Error) => void) => busboy.Busboy;
-    }
-}
 
-declare const fastifyMultipart: fastify.Plugin<Server, IncomingMessage, ServerResponse, {
+export interface MultipartOptions {
     /**
      * Append the multipart parameters to the body object
      */
@@ -76,6 +69,15 @@ declare const fastifyMultipart: fastify.Plugin<Server, IncomingMessage, ServerRe
          */
         headerPairs?: number;
     }
-}>;
+}
+
+declare module "fastify" {
+    interface FastifyRequest<HttpRequest> {
+        isMultipart: () => boolean;
+        multipart: (handler: MultipartHandler, next: (err: Error) => void, options?: MultipartOptions) => busboy.Busboy;
+    }
+}
+
+declare const fastifyMultipart: fastify.Plugin<Server, IncomingMessage, ServerResponse, MultipartOptions>;
 
 export = fastifyMultipart;
